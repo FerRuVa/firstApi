@@ -1,8 +1,10 @@
 from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
+from fastapi import HTTPException
 from pydantic import BaseModel, Field
 from typing import Optional, List
 import datetime
+
 
 app = FastAPI()
 
@@ -42,12 +44,19 @@ class MovieCreate (BaseModel):
         }
     }
 
+#class MovieUpdate(BaseModel):
+   # title: str | None = Field(default=None, min_length=15, max_length=30)
+   # overview: str | None = Field(default=None, min_length=15, max_length=50)
+   # year: int | None = Field(default=None, ge=1900, le=datetime.date.today().year)
+   # rating: float | None = Field(default=None, ge=0, le=10)
+   # category: str | None = Field(default=None, min_length=5, max_length=20)
+
 class MovieUpdate(BaseModel):
-    title:str = Field(min_length=15, max_length=30)
-    overview: str = Field(min_length=15, max_length=50)
-    year:int = Field(le=datetime.date.today().year, ge=1900)
-    rating:float = Field(ge=0, le=10)
-    category:str = Field(min_length=5, max_length=20)
+    title: Optional[str] = None
+    overview: Optional[str] = None
+    year: Optional[int] = None
+    rating: Optional[float] = None
+    category: Optional[str] = None
 
 
 movies = [
@@ -124,6 +133,21 @@ def update_movie(
                 item['rating'] = movie.rating
                 item['category'] = movie.category
         return movies
+
+@app.patch('/movies/{id}')
+def update_movie_patch(id: int, movie: MovieUpdate):
+
+    for item in movies:
+        if item['id'] == id:
+
+            update_data = movie.model_dump(exclude_unset=True)
+
+            for key, value in update_data.items():
+               item[key] = value
+
+            return item
+
+    raise HTTPException(status_code=404, detail="Movie not found")
 
 @app.delete('/movies/{id}', tags=['Movies'])
 def delete_movie(id:int) -> List[Movie]:
