@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Body
+""""from fastapi import FastAPI, Body
 from fastapi.responses import HTMLResponse
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
@@ -154,4 +154,51 @@ def delete_movie(id:int) -> List[Movie]:
     for movie in movies:
             if  movie['id'] == id:
                 movies.remove(movie)
-    return movies
+    return movies"""
+
+from fastapi import FastAPI, Depends
+from sqlalchemy.orm import Session
+import models, schemas, crud
+from database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
+
+app = FastAPI()
+
+# dependencia de la DB
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# CREATE
+@app.post("/movies")
+def create_movie(movie: schemas.MovieCreate, db: Session = Depends(get_db)):
+    return crud.create_movie(db, movie)
+
+# READ ALL
+@app.get("/movies")
+def read_movies(db: Session = Depends(get_db)):
+    return crud.get_movies(db)
+
+# READ ONE
+@app.get("/movies/{movie_id}")
+def read_movie(movie_id: int, db: Session = Depends(get_db)):
+    return crud.get_movie(db, movie_id)
+
+# UPDATE ALL
+@app.put("/movies/{movie_id}")
+def update_movie(movie_id: int, movie: schemas.MovieUpdate, db: Session = Depends(get_db)):
+    return crud.update_movie(db, movie_id, movie)
+
+# UPDATE PATCH
+@app.patch("/movie/patch/{movie_id}")
+def patch_movie(movie_id: int, movie: schemas.MovieUpdate, db: Session = Depends(get_db)):
+    return crud.patch_movie(db, movie_id, movie)
+
+# DELETE
+@app.delete("/movies/{movie_id}")
+def delete_movie(movie_id: int, db: Session = Depends(get_db)):
+    return crud.delete_movie(db, movie_id)
