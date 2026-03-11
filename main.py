@@ -143,7 +143,7 @@ def update_movie_patch(id: int, movie: MovieUpdate):
             update_data = movie.model_dump(exclude_unset=True)
 
             for key, value in update_data.items():
-               item[key] = value
+                item[key] = value
 
             return item
 
